@@ -1,29 +1,29 @@
 #include <Arduino.h>
 
+// set before use
+// board pins mapping
 uint8_t pin_x1 = A0,
     pin_y1 = A1,
     pin_x2 = A2,
     pin_y2 = A3;
 
-int16_t mid_x1 = 506,
-        mid_y1 = 506,
-        mid_x2 = 506,
-        mid_y2 = 506;
+int16_t mid_x1, mid_y1, mid_x2, mid_y2;
 
 uint8_t data[10] = {0};
 
-void calibrate_josticks();
+void calibrate_joysticks();
 
-uint8_t map_jostick_value(int16_t value, int16_t mid_value);
+uint8_t map_joystick_value(int16_t value, int16_t mid_value);
 
-void data_update_josticks();
+void data_update_joysticks();
 
 void setup() {
     Serial.begin(9600);
+    calibrate_joysticks();
 }
 
 void loop() {
-    data_update_josticks();
+    data_update_joysticks();
     Serial.print( data[0] );
     Serial.print(" ");
     Serial.print( data[1] );
@@ -33,8 +33,8 @@ void loop() {
     Serial.println( data[3] );
 }
 
-void calibrate_josticks() {
-    int sum_x1 = 0,
+void calibrate_joysticks() {
+    int32_t sum_x1 = 0,
         sum_y1 = 0,
         sum_x2 = 0,
         sum_y2 = 0;
@@ -49,10 +49,11 @@ void calibrate_josticks() {
     mid_y1 = (int)(sum_y1 / 1000);
     mid_x2 = (int)(sum_x2 / 1000);
     mid_y2 = (int)(sum_y2 / 1000);
-
 }
 
-uint8_t map_jostick_value(int16_t value, int16_t mid_value) {
+uint8_t map_joystick_value(int16_t value, int16_t mid_value) {
+    // joystick row values range: 0 to 1023
+    // map to range 0 to 255
     uint8_t result;
     if( value < ( mid_value - 4 ) ) {
         result = value / ( mid_value / 127 );
@@ -68,10 +69,10 @@ uint8_t map_jostick_value(int16_t value, int16_t mid_value) {
     return result;
 }
 
-void data_update_josticks()
+void data_update_joysticks()
 {
-    data[0] = map_jostick_value(analogRead(pin_x1), mid_x1);
-    data[1] = map_jostick_value(analogRead(pin_y1), mid_y1);
-    data[2] = map_jostick_value(analogRead(pin_x2), mid_x2);
-    data[3] = map_jostick_value(analogRead(pin_y2), mid_y2);
+    data[0] = map_joystick_value(analogRead(pin_x1), mid_x1);
+    data[1] = map_joystick_value(analogRead(pin_y1), mid_y1);
+    data[2] = map_joystick_value(analogRead(pin_x2), mid_x2);
+    data[3] = map_joystick_value(analogRead(pin_y2), mid_y2);
 }
