@@ -1,29 +1,42 @@
-#include <Arduino.h>
+#include "ext/RF24/nRF24L01.h"
+#include "ext/RF24/RF24.h"
 
-// set before use
+// // // set before use
 // board pins mapping
 uint8_t pin_x1 = A0,
     pin_y1 = A1,
     pin_x2 = A2,
-    pin_y2 = A3;
+    pin_y2 = A3,
+    pin_CE = 7,
+    pin_CSN = 8;
+
+const byte pipeOut[6] = "00001";
 
 int16_t mid_x1, mid_y1, mid_x2, mid_y2;
 
-uint8_t data[10] = {0};
+uint8_t data[10] = {143};
+
+RF24 radio(pin_CE, pin_CSN);
 
 void calibrate_joysticks();
 
 uint8_t map_joystick_value(int16_t value, int16_t mid_value);
+bool res;
 
 void data_update_joysticks();
 
 void setup() {
     Serial.begin(9600);
     calibrate_joysticks();
+    data_update_joysticks();
+    radio.begin();
+    radio.openWritingPipe(pipeOut);
+    radio.stopListening();
 }
 
 void loop() {
     data_update_joysticks();
+    Serial.print("t: ");
     Serial.print( data[0] );
     Serial.print(" ");
     Serial.print( data[1] );
@@ -31,6 +44,9 @@ void loop() {
     Serial.print( data[2] );
     Serial.print(" ");
     Serial.println( data[3] );
+    radio.write(&data, sizeof(data));
+    radio.printDetails();
+    delay(300);
 }
 
 void calibrate_joysticks() {
