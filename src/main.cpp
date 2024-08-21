@@ -8,7 +8,9 @@ uint8_t pin_x1 = A0,
     pin_x2 = A2,
     pin_y2 = A3,
     pin_CE = 7,
-    pin_CSN = 8;
+    pin_CSN = 8,
+    pin_power_on = 2,
+    pin_radio_connected = 3;
 
 const byte pipeOut[6] = "00001";
 
@@ -32,19 +34,35 @@ void setup() {
     radio.begin();
     radio.openWritingPipe(pipeOut);
     radio.stopListening();
+    pinMode(pin_power_on,OUTPUT);
+    digitalWrite(pin_power_on, LOW);
+    pinMode(pin_radio_connected, OUTPUT);
+    digitalWrite(pin_radio_connected, LOW);
 }
 
 void loop() {
+    digitalWrite(pin_power_on, HIGH);
     data_update_joysticks();
-    Serial.print("t: ");
+    bool radioRes = radio.write(&data, sizeof(data));
+    // joysticks output
+    Serial.print("js: ");
     Serial.print( data[0] );
     Serial.print(" ");
     Serial.print( data[1] );
     Serial.print(" ");
     Serial.print( data[2] );
     Serial.print(" ");
-    Serial.println( data[3] );
-    radio.write(&data, sizeof(data));
+    Serial.print( data[3] );
+    // is radio connection established
+    if(radioRes) {
+        Serial.print(" +");
+        digitalWrite(pin_radio_connected, HIGH);
+    }
+    else {
+        Serial.print(" -");
+        digitalWrite(pin_radio_connected, LOW);
+    }
+    Serial.println( " " );
     radio.printDetails();
     delay(300);
 }
