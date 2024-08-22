@@ -45,26 +45,23 @@ void loop() {
     data_update_joysticks();
     bool radioRes = radio.write(&data, sizeof(data));
     // joysticks output
-    Serial.print("js: ");
-    Serial.print( data[0] );
-    Serial.print(" ");
-    Serial.print( data[1] );
-    Serial.print(" ");
-    Serial.print( data[2] );
-    Serial.print(" ");
-    Serial.print( data[3] );
+//    Serial.print("js: ");
+//    Serial.print( data[0] );
+//    Serial.print(" ");
+//    Serial.print( data[1] );
+//    Serial.print(" ");
+//    Serial.print( data[2] );
+//    Serial.print(" ");
+//    Serial.print( data[3] );
     // is radio connection established
     if(radioRes) {
-        Serial.print(" +");
         digitalWrite(pin_radio_connected, HIGH);
     }
     else {
-        Serial.print(" -");
         digitalWrite(pin_radio_connected, LOW);
     }
-    Serial.println( " " );
+//    Serial.println( " " );
     radio.printDetails();
-    delay(300);
 }
 
 void calibrate_joysticks() {
@@ -85,18 +82,20 @@ void calibrate_joysticks() {
     mid_y2 = (int)(sum_y2 / 1000);
 }
 
-uint8_t map_joystick_value(int16_t value, int16_t mid_value) {
+uint8_t map_joystick_value(int16_t value, int16_t mid_value, bool isYAxis) {
     // joystick row values range: 0 to 1023
     // map to range 0 to 255
     uint8_t result;
-    if( value < ( mid_value - 4 ) ) {
-        result = value / ( mid_value / 127 );
-    }
-    else if( value > ( mid_value + 4 ) ) {
-        result = ( value / ( ( 1023 - mid_value ) / 127 ) );
+    if( value < ( mid_value + 4 ) && value > ( mid_value - 4 )  ) {
+        result = 128;
     }
     else {
-        result = 128;
+        result = value / ( ( 1023 / 255 ) ) ;
+        if(isYAxis) {
+            // looks like arduino joysticks Y axis works upside down
+            // so invert result for Y axis
+            result = 255 - result;
+        }
     }
     if(result > 255) result = 255;
     else if(result < 0) result = 0;
@@ -105,8 +104,8 @@ uint8_t map_joystick_value(int16_t value, int16_t mid_value) {
 
 void data_update_joysticks()
 {
-    data[0] = map_joystick_value(analogRead(pin_x1), mid_x1);
-    data[1] = map_joystick_value(analogRead(pin_y1), mid_y1);
-    data[2] = map_joystick_value(analogRead(pin_x2), mid_x2);
-    data[3] = map_joystick_value(analogRead(pin_y2), mid_y2);
+    data[0] = map_joystick_value(analogRead(pin_x1), mid_x1, false);
+    data[1] = map_joystick_value(analogRead(pin_y1), mid_y1, true);
+    data[2] = map_joystick_value(analogRead(pin_x2), mid_x2, false);
+    data[3] = map_joystick_value(analogRead(pin_y2), mid_y2, true);
 }
